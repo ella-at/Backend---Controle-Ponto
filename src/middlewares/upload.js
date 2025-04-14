@@ -1,37 +1,21 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
 
-// Cria pasta se não existir
-function ensureFolderExists(folderPath) {
-  if (!fs.existsSync(folderPath)) {
-    fs.mkdirSync(folderPath, { recursive: true });
-  }
-}
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    let folder = 'geral';
+    if (file.fieldname === 'foto') folder = 'fotos';
+    if (file.fieldname === 'assinatura') folder = 'assinaturas';
+    if (file.fieldname === 'comprovante') folder = 'comprovantes';
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    let subfolder = '';
-
-    if (file.fieldname === 'foto') {
-      subfolder = 'fotos';
-    } else if (file.fieldname === 'assinatura') {
-      subfolder = 'assinaturas';
-    } else if (file.fieldname === 'comprovante') {
-      subfolder = 'comprovantes';
-    }
-
-    const fullPath = path.join(__dirname, '../../uploads', subfolder);
-    ensureFolderExists(fullPath);
-
-    cb(null, fullPath);
+    return {
+      folder,
+      format: 'png',
+      public_id: `${file.fieldname}-${Date.now()}`
+    };
   },
-
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const filename = `${Date.now()}-${file.fieldname}${ext}`;
-    cb(null, filename);
-  }
 });
 
 const upload = multer({ storage });

@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Servir arquivos estáticos (ex: comprovantes de pagamento)
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); 
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Sincronização do banco de dados
 db.sequelize.sync({ alter: true }) 
