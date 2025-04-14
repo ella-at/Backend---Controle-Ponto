@@ -5,50 +5,6 @@ const path = require('path');
 const fs = require('fs');
 
 module.exports = {
-  async registrar(req, res) {
-    try {
-      const { funcionario_id, tipo } = req.body;
-
-      const fotoPath = req.files['foto']?.[0]?.filename || null;
-      const assinaturaPath = req.files['assinatura']?.[0]?.filename || null;
-
-      const foto = fotoPath ? `uploads/fotos/${fotoPath}` : null;
-      const assinatura = assinaturaPath ? `uploads/assinaturas/${assinaturaPath}` : null;
-        
-
-      const ultimoPonto = await Ponto.findOne({
-        where: { funcionario_id },
-        order: [['data_hora', 'DESC']]
-      });
-
-      if (ultimoPonto) {
-        if (ultimoPonto.tipo === tipo) {
-          return res.status(400).json({
-            error: `Não é permitido registrar duas ${tipo}s seguidas sem alternância.`
-          });
-        }
-
-        if (ultimoPonto.tipo === 'entrada' && tipo === 'entrada') {
-          return res.status(400).json({
-            error: 'Você já registrou uma entrada. Registre a saída antes de uma nova entrada.'
-          });
-        }
-      }
-
-      const ponto = await Ponto.create({
-        funcionario_id,
-        tipo,
-        foto,
-        assinatura,
-        data_hora: new Date(),
-      });
-
-      res.status(201).json(ponto);
-    } catch (error) {
-      console.error(error);
-      res.status(400).json({ error: 'Erro ao registrar ponto' });
-    }
-  },
 
   // PONTOS DO DIA DE HOJE
   async listarHoje(req, res) {
@@ -125,20 +81,19 @@ module.exports = {
   // PONTOS POR FUNCIONÁRIO
   async porFuncionario(req, res) {
     try {
-      const { id } = req.params;
-  
+      const funcionario_id = req.params.id;
       const pontos = await Ponto.findAll({
-        where: { funcionario_id: id },
+        where: { funcionario_id },
         order: [['data_hora', 'DESC']]
       });
-  
       res.json(pontos);
     } catch (error) {
       console.error('Erro ao buscar pontos por funcionário:', error);
-      res.status(500).json({ error: 'Erro ao buscar registros de ponto' });
+      res.status(500).json({ error: 'Erro ao buscar registros do funcionário' });
     }
   },
 
+  ////////////////////
   async registrar(req, res) {
     try {
       const { funcionario_id, tipo } = req.body;
@@ -219,19 +174,7 @@ module.exports = {
   },
   
 
-  async porFuncionario(req, res) {
-    try {
-      const funcionario_id = req.params.id;
-      const pontos = await Ponto.findAll({
-        where: { funcionario_id },
-        order: [['data_hora', 'DESC']]
-      });
-      res.json(pontos);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: 'Erro ao buscar registros do funcionário' });
-    }
-  },
+  
   
   // EXPORTAR PONTOS PARA EXCEL
   async exportarExcel(req, res) {
