@@ -191,7 +191,7 @@ module.exports = {
         return res.status(400).json({ error: 'Dados incompletos' });
       }
   
-      // Regra: impede duas entradas ou saídas seguidas
+      // Regras de negócio: impedir duplas entradas ou saídas
       const ultimoPonto = await Ponto.findOne({
         where: { funcionario_id },
         order: [['data_hora', 'DESC']]
