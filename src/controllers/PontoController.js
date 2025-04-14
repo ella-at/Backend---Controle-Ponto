@@ -88,7 +88,7 @@ module.exports = {
       });
       res.json(pontos);
     } catch (error) {
-      console.error('Erro ao buscar pontos por funcionário:', error);
+      console.error(error);
       res.status(500).json({ error: 'Erro ao buscar registros do funcionário' });
     }
   },
