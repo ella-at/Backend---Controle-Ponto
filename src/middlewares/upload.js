@@ -1,7 +1,6 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const uploadBasePath = path.join(__dirname, '../../uploads');
 
 // Cria pasta se não existir
 function ensureFolderExists(folderPath) {
