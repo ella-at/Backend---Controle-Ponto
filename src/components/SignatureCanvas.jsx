@@ -1,46 +1,42 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
+import SignatureCanvas from 'react-signature-canvas';
 
-function SignatureCanvas({ onSignature }) {
-  const canvasRef = useRef(null);
+export default function SignaturePad({ onSignature }) {
+  const sigRef = useRef();
 
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const clear = () => sigRef.current.clear();
+
+  const save = () => {
+    if (!sigRef.current.isEmpty()) {
+      const dataURL = sigRef.current.toDataURL();
+      onSignature(dataURL);
+    }
   };
 
-  const handleMouseUp = () => {
-    const canvas = canvasRef.current;
-    onSignature(canvas.toDataURL('image/png'));
-  };
+  useEffect(() => {
+    window.addEventListener('resize', () => {
+      const canvas = sigRef.current.getCanvas();
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    });
+  }, []);
 
   return (
-    <div style={{ marginBottom: '1rem' }}>
-      <canvas
-        ref={canvasRef}
-        width={300}
-        height={150}
-        style={{ border: '1px solid black' }}
-        onMouseUp={handleMouseUp}
-        onTouchEnd={handleMouseUp}
-        onMouseDown={e => {
-          const canvas = canvasRef.current;
-          const ctx = canvas.getContext('2d');
-          ctx.beginPath();
-          ctx.moveTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
+    <div style={{ border: '1px solid #ccc', marginTop: '1rem' }}>
+      <SignatureCanvas
+        penColor="black"
+        canvasProps={{
+          width: 300,
+          height: 150,
+          className: 'sigCanvas',
+          style: { width: '100%', height: '150px' },
         }}
-        onMouseMove={e => {
-          if (e.buttons !== 1) return;
-          const canvas = canvasRef.current;
-          const ctx = canvas.getContext('2d');
-          ctx.lineTo(e.nativeEvent.offsetX, e.nativeEvent.offsetY);
-          ctx.stroke();
-        }}
+        ref={sigRef}
       />
-      <br />
-      <button onClick={clearCanvas}>Limpar Assinatura</button>
+      <div style={{ marginTop: 10 }}>
+        <button onClick={clear}>🧽 Limpar</button>
+        <button onClick={save} style={{ marginLeft: 10 }}>💾 Salvar</button>
+      </div>
     </div>
   );
 }
-
-export default SignatureCanvas;

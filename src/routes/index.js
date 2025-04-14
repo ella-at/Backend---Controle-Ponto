@@ -8,5 +8,6 @@ const pagamentosRoutes = require('./pagamentos');
 router.use('/funcionarios', funcionarioRoutes);
 router.use('/pontos', pontoRoutes);
 router.use('/pagamentos', pagamentosRoutes);
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 module.exports = router;

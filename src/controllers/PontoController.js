@@ -9,11 +9,11 @@ module.exports = {
     try {
       const { funcionario_id, tipo } = req.body;
 
-      const fotoPath = req.files['foto']?.[0]?.filename;
-    const assinaturaPath = req.files['assinatura']?.[0]?.filename;
-
-    const foto = fotoPath ? `uploads/${fotoPath}` : null;
-    const assinatura = assinaturaPath ? `uploads/${assinaturaPath}` : null;
+      const fotoPath = req.files['foto']?.[0]?.path || null;
+      const assinaturaPath = req.files['assinatura']?.[0]?.path || null;
+      const foto = fotoPath ? `uploads/fotos/${path.basename(fotoPath)}` : null;
+      const assinatura = assinaturaPath ? `uploads/assinaturas/${path.basename(assinaturaPath)}` : null;
+      
 
       const ultimoPonto = await Ponto.findOne({
         where: { funcionario_id },
