@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
+const CLOUDINARY_URL = "https://res.cloudinary.com/dmjdbcpv7/image/upload";
+
+
 function PainelVerificacao() {
   const [entradas, setEntradas] = useState([]);
   const [faltantes, setFaltantes] = useState([]);
@@ -35,10 +38,10 @@ function PainelVerificacao() {
               <strong>{p.Funcionario?.nome}</strong> - {new Date(p.data_hora).toLocaleTimeString()}
               <br />
               {p.foto && (
-                <img src={`http://localhost:3000/${p.foto}`} alt="foto" width="100" />
+                <img src={`${CLOUDINARY_URL}/${p.foto}`} alt="foto" width="100" />
               )}
               {p.assinatura && (
-                <img src={`http://localhost:3000/${p.assinatura}`} alt="assinatura" width="100" />
+                <img src={`${CLOUDINARY_URL}/${p.assinatura}`} alt="assinatura" width="100" />
               )}
             </li>
           ))}
