@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const path = require('path'); // ✅ Só aqui
+const path = require('path'); 
 const routes = require('./routes');
 const db = require('./models');
 require('dotenv').config();

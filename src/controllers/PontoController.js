@@ -8,8 +8,31 @@ module.exports = {
   async registrar(req, res) {
     try {
       const { funcionario_id, tipo } = req.body;
-      const foto = req.files['foto']?.[0]?.path || null;
-      const assinatura = req.files['assinatura']?.[0]?.path || null;
+
+      const fotoPath = req.files['foto']?.[0]?.filename;
+    const assinaturaPath = req.files['assinatura']?.[0]?.filename;
+
+    const foto = fotoPath ? `uploads/${fotoPath}` : null;
+    const assinatura = assinaturaPath ? `uploads/${assinaturaPath}` : null;
+
+      const ultimoPonto = await Ponto.findOne({
+        where: { funcionario_id },
+        order: [['data_hora', 'DESC']]
+      });
+
+      if (ultimoPonto) {
+        if (ultimoPonto.tipo === tipo) {
+          return res.status(400).json({
+            error: `Não é permitido registrar duas ${tipo}s seguidas sem alternância.`
+          });
+        }
+
+        if (ultimoPonto.tipo === 'entrada' && tipo === 'entrada') {
+          return res.status(400).json({
+            error: 'Você já registrou uma entrada. Registre a saída antes de uma nova entrada.'
+          });
+        }
+      }
 
       const ponto = await Ponto.create({
         funcionario_id,
@@ -21,10 +44,12 @@ module.exports = {
 
       res.status(201).json(ponto);
     } catch (error) {
+      console.error(error);
       res.status(400).json({ error: 'Erro ao registrar ponto' });
     }
   },
 
+  // PONTOS DO DIA DE HOJE
   async listarHoje(req, res) {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -47,6 +72,7 @@ module.exports = {
     }
   },
 
+  // PONTOS POR DATA
   async pontosPorData(req, res) {
     try {
       const data = req.query.data;
@@ -70,6 +96,7 @@ module.exports = {
     }
   },
 
+  // FUNCIONÁRIOS FALTANTES HOJE
   async faltantes(req, res) {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -94,6 +121,7 @@ module.exports = {
     }
   },
 
+  // PONTOS POR FUNCIONÁRIO
   async porFuncionario(req, res) {
     try {
       const { id } = req.params;
@@ -167,7 +195,7 @@ module.exports = {
     }
   },
   
-  
+  // EXPORTAR PONTOS PARA EXCEL
   async exportarExcel(req, res) {
     try {
       const hoje = new Date();
