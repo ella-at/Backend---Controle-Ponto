@@ -12,6 +12,13 @@ router.post(
   PontoController.registrar
 );
 
+router.post(
+  '/assinatura-mobile',
+  upload.single('assinatura'),
+  PontoController.registrarAssinaturaMobile
+);
+
+
 router.get('/hoje', PontoController.listarHoje);
 router.get('/faltantes', PontoController.faltantes);
 router.get('/por-data', PontoController.pontosPorData);

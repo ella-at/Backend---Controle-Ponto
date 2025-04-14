@@ -182,6 +182,43 @@ module.exports = {
     }
   },
   
+  async registrarAssinaturaMobile(req, res) {
+    try {
+      const { funcionario_id, tipo = 'entrada' } = req.body;
+      const assinatura = req.file?.path;
+  
+      if (!funcionario_id || !assinatura) {
+        return res.status(400).json({ error: 'Dados incompletos' });
+      }
+  
+      // Regra: impede duas entradas ou saídas seguidas
+      const ultimoPonto = await Ponto.findOne({
+        where: { funcionario_id },
+        order: [['data_hora', 'DESC']]
+      });
+  
+      if (ultimoPonto && ultimoPonto.tipo === tipo) {
+        return res.status(400).json({
+          error: `Já existe um registro de ${tipo}.`
+        });
+      }
+  
+      const ponto = await Ponto.create({
+        funcionario_id,
+        tipo,
+        assinatura,
+        foto: null,
+        data_hora: new Date()
+      });
+  
+      return res.status(201).json(ponto);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erro ao registrar assinatura por dispositivo' });
+    }
+  },
+  
+
   async porFuncionario(req, res) {
     try {
       const funcionario_id = req.params.id;
