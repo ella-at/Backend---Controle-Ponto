@@ -56,13 +56,24 @@ module.exports = {
           funcionariosMap[id] = {
             funcionario: ponto.Funcionario,
             tipos: [],
-            pontoIds: []
+            pontoIds: [],
+            entrada: null,
+            saida: null,
           };
         }
-
+      
         funcionariosMap[id].tipos.push(ponto.tipo);
         funcionariosMap[id].pontoIds.push(ponto.id);
+      
+        if (ponto.tipo === 'entrada' && (!funcionariosMap[id].entrada || new Date(ponto.data_hora) < new Date(funcionariosMap[id].entrada))) {
+          funcionariosMap[id].entrada = ponto.data_hora;
+        }
+      
+        if (ponto.tipo === 'saida' && (!funcionariosMap[id].saida || new Date(ponto.data_hora) > new Date(funcionariosMap[id].saida))) {
+          funcionariosMap[id].saida = ponto.data_hora;
+        }
       });
+      
 
       const pendentes = [];
 
@@ -89,18 +100,25 @@ module.exports = {
         { header: 'Nome', key: 'nome', width: 30 },
         { header: 'Cargo', key: 'cargo', width: 20 },
         { header: 'Departamento', key: 'departamento', width: 20 },
-        { header: 'PIX', key: 'pix', width: 30 }
+        { header: 'PIX', key: 'pix', width: 30 },
+        { header: 'Entrada', key: 'entrada', width: 20 },
+        { header: 'Saída', key: 'saida', width: 20 }
       ];
+      
 
       pendentes.forEach((f) => {
+        const dados = funcionariosMap[f.id];
         sheet.addRow({
           id: f.id,
           nome: f.nome,
           cargo: f.cargo,
           departamento: f.departamento,
-          pix: f.pix
+          pix: f.pix,
+          entrada: dados.entrada ? new Date(dados.entrada).toLocaleString('pt-BR') : '',
+          saida: dados.saida ? new Date(dados.saida).toLocaleString('pt-BR') : ''
         });
       });
+      
 
       const filePath = path.join(__dirname, '../../uploads/pendentes-pagamento.xlsx');
       await workbook.xlsx.writeFile(filePath);
