@@ -27,4 +27,15 @@ app.use('/', routes);
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+
+const path = require('path');
+
+// Serve arquivos estáticos da pasta de build
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Todas as rotas que não forem API voltam para o index.html (modo SPA)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 });
