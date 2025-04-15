@@ -11,6 +11,13 @@ function App() {
       <div style={{ marginBottom: '1rem' }}>
         <button onClick={() => setTela('registro')}>Registrar Ponto</button>
         <button onClick={() => setTela('painel')}>Painel de Verificação</button>
+        <button
+          onClick={() => window.open('/registro-funcionario', '_blank')}
+          style={botaoStyle(false)}
+        >
+          Registro de Funcionário
+        </button>
+
       </div>
 
       {tela === 'registro' && <RegistroPonto />}
