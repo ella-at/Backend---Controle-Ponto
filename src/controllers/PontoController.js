@@ -8,14 +8,16 @@ module.exports = {
 
   // PONTOS DO DIA DE HOJE
   async listarHoje(req, res) {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
+    const agora = new Date();
+    const inicioDiaBrasil = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    inicioDiaBrasil.setHours(0, 0, 0, 0);
+
 
     try {
       const pontos = await Ponto.findAll({
         where: {
           data_hora: {
-            [Op.gte]: hoje
+            [Op.gte]: inicioDiaBrasil
           }
         },
         include: [{
