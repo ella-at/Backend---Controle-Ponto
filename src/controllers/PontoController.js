@@ -98,30 +98,19 @@ module.exports = {
   ////////////////////
   async registrar(req, res) {
     try {
-      const { funcionario_id, tipo } = req.body;
+      const { funcionario_id } = req.body;
       const foto = req.files['foto']?.[0]?.path || null;
       const assinatura = req.files['assinatura']?.[0]?.path || null;
   
-      // Verifica o último ponto do funcionário
+      // ⚙️ Alternância automática de tipo
+      let tipo = 'entrada';
       const ultimoPonto = await Ponto.findOne({
         where: { funcionario_id },
         order: [['data_hora', 'DESC']]
       });
   
-      // ⚠️ Regra de validação
-      if (ultimoPonto) {
-        if (ultimoPonto.tipo === tipo) {
-          return res.status(400).json({
-            error: `Não é permitido registrar duas ${tipo}s seguidas sem alternância.`
-          });
-        }
-  
-        // Se tentar registrar nova entrada sem ter registrado uma saída
-        if (ultimoPonto.tipo === 'entrada' && tipo === 'entrada') {
-          return res.status(400).json({
-            error: 'Você já registrou uma entrada. Registre a saída antes de uma nova entrada.'
-          });
-        }
+      if (ultimoPonto && ultimoPonto.tipo === 'entrada') {
+        tipo = 'saida';
       }
   
       const ponto = await Ponto.create({
