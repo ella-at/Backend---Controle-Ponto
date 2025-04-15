@@ -18,6 +18,16 @@ router.post(
   PontoController.registrarAssinaturaMobile
 );
 
+router.post(
+  '/',
+  upload.fields([
+    { name: 'foto', maxCount: 1 },
+    { name: 'assinatura', maxCount: 1 }
+  ]),
+  PontoController.registrar
+);
+
+
 
 router.get('/hoje', PontoController.listarHoje);
 router.get('/faltantes', PontoController.faltantes);
