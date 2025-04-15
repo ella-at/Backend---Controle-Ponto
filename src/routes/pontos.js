@@ -27,6 +27,7 @@ router.post(
   PontoController.registrar
 );
 
+router.post('/saida-administrativa', PontoController.registrarSaidaAdm);
 
 
 router.get('/hoje', PontoController.listarHoje);
