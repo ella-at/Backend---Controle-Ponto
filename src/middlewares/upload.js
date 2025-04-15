@@ -10,14 +10,25 @@ const storage = new CloudinaryStorage({
     if (file.fieldname === 'assinatura') folder = 'assinaturas';
     if (file.fieldname === 'comprovante') folder = 'comprovantes';
 
+    const originalExt = file.originalname.split('.').pop().toLowerCase();
+
     return {
       folder,
-      format: 'png',
+      format: originalExt, // Usa extensão real do arquivo
       public_id: `${file.fieldname}-${Date.now()}`
     };
   },
 });
 
-const upload = multer({ storage });
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Tipo de arquivo não suportado. Use PDF, PNG, JPG ou JPEG.'));
+  }
+};
+
+const upload = multer({ storage, fileFilter });
 
 module.exports = upload;

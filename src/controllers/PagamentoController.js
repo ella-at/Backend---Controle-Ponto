@@ -8,17 +8,13 @@ module.exports = {
   async create(req, res) {
     try {
       const { funcionario_id, ponto_id } = req.body;
-
-      const comprovantePath = req.file?.path || '';
-      const caminhoRelativo = comprovantePath
-      ? `uploads/comprovantes/${path.basename(comprovantePath)}`
-      : null;
-
-
+  
+      const comprovanteUrl = req.file?.path || null; // Cloudinary já retorna URL pública
+  
       const pagamento = await Pagamento.create({
         funcionario_id,
         ponto_id,
-        comprovante: caminhoRelativo,
+        comprovante: comprovanteUrl, // já salva URL
       });
   
       res.status(201).json(pagamento);
