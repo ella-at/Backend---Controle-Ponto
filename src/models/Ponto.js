@@ -10,14 +10,15 @@ module.exports = (sequelize, DataTypes) => {
     },
     foto: DataTypes.STRING,
     assinatura: DataTypes.STRING,
+    responsavel_saida_adm: DataTypes.STRING,
     funcionario_id: {
       type: DataTypes.INTEGER,
       allowNull: false
     }
   }, {
     tableName: 'pontos',
-    underscored: false, // usa camelCase nos campos createdAt/updatedAt
-    timestamps: true    // habilita createdAt/updatedAt automaticamente
+    underscored: false, 
+    timestamps: true    
   });
 
   Ponto.associate = (models) => {
