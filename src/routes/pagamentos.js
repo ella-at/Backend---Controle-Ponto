@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../middlewares/upload'); // ✅ Mantenha esta linha
 const PagamentoController = require('../controllers/PagamentoController');
-const pontoController = require('../controllers/pontoController');
+const pontoController = require('../controllers/PontoController');
 
 
 
