@@ -10,6 +10,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     foto: DataTypes.STRING,
     assinatura: DataTypes.STRING,
+    responsavel_saida_adm: DataTypes.STRING,
     funcionario_id: {
       type: DataTypes.INTEGER,
       allowNull: false
