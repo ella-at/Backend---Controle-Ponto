@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pontoController = require('../controllers/pontoController');
+const pontoController = require('../controllers/PontoController');
 const upload = require('../middlewares/upload');
 
 // Registro de ponto (com foto e assinatura)
