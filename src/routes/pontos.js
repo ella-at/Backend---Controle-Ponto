@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const PontoController = require('../controllers/PontoController');
+const PontoController = require('../controllers/pontoController');
 const upload = require('../middlewares/upload');
 
 router.post(
