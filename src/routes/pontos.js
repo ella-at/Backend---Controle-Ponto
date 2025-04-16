@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const PontoController = require('../controllers/PontoController');
+const PontoController = require('../controllers/pontoController');
 const upload = require('../middlewares/upload');
 
 router.post(
@@ -18,14 +18,7 @@ router.post(
   PontoController.registrarAssinaturaMobile
 );
 
-router.post(
-  '/',
-  upload.fields([
-    { name: 'foto', maxCount: 1 },
-    { name: 'assinatura', maxCount: 1 }
-  ]),
-  PontoController.registrar
-);
+
 
 router.post('/saida-administrativa', PontoController.registrarSaidaAdm);
 
@@ -38,5 +31,5 @@ router.get('/exportar', PontoController.exportarExcel);
 router.get('/por-funcionario/:id', PontoController.porFuncionario);
 router.get('/funcionario/:id', PontoController.porFuncionario);
 
-module.exports = router;
+module.exports = router; 
 
