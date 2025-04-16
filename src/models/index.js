@@ -1,7 +1,36 @@
-const Sequelize = require('sequelize');
-const sequelize = require('../config/db'); // sua instância do Sequelize
+'use strict';
 
+const fs = require('fs');
+const path = require('path');
+const Sequelize = require('sequelize');
+const basename = path.basename(__filename);
 const db = {};
+
+// Se você usa config/db.js como instância personalizada:
+const sequelize = require('../config/db'); // ❗ deve exportar a instância do Sequelize
+
+// Carregar todos os modelos automaticamente
+fs
+  .readdirSync(__dirname)
+  .filter(file => {
+    return (
+      file.indexOf('.') !== 0 &&
+      file !== basename &&
+      file.slice(-3) === '.js' &&
+      file.indexOf('.test.js') === -1
+    );
+  })
+  .forEach(file => {
+    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+    db[model.name] = model;
+  });
+
+// Chamar associações
+Object.keys(db).forEach(modelName => {
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
@@ -15,5 +44,6 @@ db.Pagamento = require('./Pagamento')(sequelize, Sequelize.DataTypes);
 db.Funcionario.associate(db);
 db.Ponto.associate(db);
 db.Pagamento.associate(db);
+
 
 module.exports = db;

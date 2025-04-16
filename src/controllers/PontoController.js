@@ -186,7 +186,28 @@ module.exports = {
     }
   },  
 
-  
+  // POST /pontos/saida-administrativa
+async registrarSaidaAdministrativa(req, res) {
+  try {
+    const { funcionario_id, data_hora, responsavel_saida_adm } = req.body;
+
+    if (!funcionario_id || !data_hora || !responsavel_saida_adm) {
+      return res.status(400).json({ error: 'Dados obrigatórios ausentes' });
+    }
+
+    const ponto = await Ponto.create({
+      funcionario_id,
+      tipo: 'saida',
+      data_hora,
+      responsavel_saida_adm
+    });
+
+    return res.status(201).json(ponto);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao registrar saída administrativa' });
+  }
+},
   
   // EXPORTAR PONTOS PARA EXCEL
   async exportarExcel(req, res) {
