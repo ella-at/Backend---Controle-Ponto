@@ -31,5 +31,6 @@ router.get('/exportar', pontoController.exportarExcel);
 router.get('/por-funcionario/:id', pontoController.porFuncionario);
 router.get('/funcionario/:id', pontoController.porFuncionario);
 router.get('/pendentes-por-dia', pontoController.pontosPendentesPorData);
+router.get('/pendencias-saida', pontoController.pendenciasSaida);
 
 module.exports = router;

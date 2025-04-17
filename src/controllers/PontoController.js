@@ -231,6 +231,69 @@ module.exports = {
       res.status(500).json({ error: 'Erro ao buscar registros pendentes do dia' });
     }
   },  
+
+  async pendenciasSaida(req, res) {
+    try {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0); // Início do dia de hoje (para buscar registros anteriores)
+  
+      // Buscar entradas anteriores a hoje
+      const entradas = await Ponto.findAll({
+        where: {
+          tipo: 'entrada',
+          data_hora: {
+            [Op.lt]: hoje
+          }
+        },
+        include: [{
+          model: Funcionario,
+          as: 'Funcionario',
+          attributes: ['id', 'nome']
+        }]
+      });
+  
+      const pendencias = [];
+  
+      for (const entrada of entradas) {
+        const saida = await Ponto.findOne({
+          where: {
+            funcionario_id: entrada.funcionario_id,
+            tipo: 'saida',
+            data_hora: {
+              [Op.gt]: entrada.data_hora,
+              [Op.lt]: hoje
+            }
+          }
+        });
+  
+        if (!saida) {
+          pendencias.push({
+            funcionario_id: entrada.funcionario_id,
+            nome: entrada.Funcionario.nome,
+            data: entrada.data_hora
+          });
+        }
+      }
+  
+      // Remover duplicatas, mantendo a pendência mais antiga por funcionário
+      const unicas = Object.values(
+        pendencias.reduce((acc, curr) => {
+          if (
+            !acc[curr.funcionario_id] ||
+            new Date(curr.data) < new Date(acc[curr.funcionario_id].data)
+          ) {
+            acc[curr.funcionario_id] = curr;
+          }
+          return acc;
+        }, {})
+      );
+  
+      res.json(unicas);
+    } catch (err) {
+      console.error('Erro ao buscar pendências de saída:', err);
+      res.status(500).json({ error: 'Erro ao buscar pendências de saída' });
+    }
+  },  
   
   // EXPORTAR PONTOS PARA EXCEL
   async exportarExcel(req, res) {
