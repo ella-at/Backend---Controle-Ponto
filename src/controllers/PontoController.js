@@ -186,7 +186,51 @@ module.exports = {
     }
   },  
 
+  async pontosPendentesPorData(req, res) {
+    try {
+      const data = req.query.data;
+      if (!data) return res.status(400).json({ error: 'Data obrigatória' });
   
+      // Buscar todos os pontos da data selecionada
+      const pontosDoDia = await Ponto.findAll({
+        where: Sequelize.where(
+          Sequelize.fn('DATE', Sequelize.col('data_hora')),
+          data
+        ),
+        include: [{ model: Funcionario, as: 'Funcionario' }],
+        order: [['data_hora', 'ASC']]
+      });
+  
+      const agrupados = {};
+  
+      for (const ponto of pontosDoDia) {
+        const id = ponto.funcionario_id;
+  
+        if (!agrupados[id]) {
+          agrupados[id] = {
+            funcionario: ponto.Funcionario,
+            entrada: null,
+            saida: null
+          };
+        }
+  
+        if (ponto.tipo === 'entrada') {
+          agrupados[id].entrada = ponto;
+        }
+  
+        if (ponto.tipo === 'saida') {
+          agrupados[id].saida = ponto;
+        }
+      }
+  
+      const pendentes = Object.values(agrupados).filter(reg => reg.entrada && !reg.saida);
+  
+      res.json(pendentes);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao buscar registros pendentes do dia' });
+    }
+  },  
   
   // EXPORTAR PONTOS PARA EXCEL
   async exportarExcel(req, res) {
