@@ -235,9 +235,8 @@ module.exports = {
   async pendenciasSaida(req, res) {
     try {
       const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0); // Início do dia de hoje (para buscar registros anteriores)
+      hoje.setHours(0, 0, 0, 0); // Início do dia de hoje
   
-      // Buscar entradas anteriores a hoje
       const entradas = await Ponto.findAll({
         where: {
           tipo: 'entrada',
@@ -255,13 +254,18 @@ module.exports = {
       const pendencias = [];
   
       for (const entrada of entradas) {
+        const entradaData = new Date(entrada.data_hora);
+        entradaData.setHours(0, 0, 0, 0);
+        const diaSeguinte = new Date(entradaData);
+        diaSeguinte.setDate(diaSeguinte.getDate() + 1);
+  
         const saida = await Ponto.findOne({
           where: {
             funcionario_id: entrada.funcionario_id,
             tipo: 'saida',
             data_hora: {
-              [Op.gt]: entrada.data_hora,
-              [Op.lt]: hoje
+              [Op.gte]: entradaData,
+              [Op.lt]: diaSeguinte
             }
           }
         });
