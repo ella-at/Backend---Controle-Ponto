@@ -10,6 +10,6 @@ const pontoController = require('../controllers/PontoController');
 router.post('/', upload.single('comprovante'), PagamentoController.create);
 router.post('/saida-administrativa', pontoController.registrarSaidaAdm);
 router.get('/funcionario/:id', PagamentoController.listByFuncionario);
-router.get('/pendentes/excel', PagamentoController.exportarPendentes); 
+router.get('/pendentes/excel', PagamentoController.exportarPendentesExcel);
 
 module.exports = router;
