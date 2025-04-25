@@ -3,6 +3,12 @@ const { Sequelize, Op } = require('sequelize');
 const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs');
+const dayjs = require('dayjs');
+const utc = require('dayjs/plugin/utc');
+const timezone = require('dayjs/plugin/timezone');
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 module.exports = {
 
@@ -185,7 +191,8 @@ module.exports = {
       }
   
       // Corrigir o fuso horário manualmente
-      const horarioBr = new Date(new Date(data_hora).toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      const horarioBr = dayjs.tz(data_hora, 'America/Sao_Paulo').toDate();
+
   
       const ponto = await Ponto.create({
         funcionario_id,
