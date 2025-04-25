@@ -32,5 +32,6 @@ router.get('/por-funcionario/:id', pontoController.porFuncionario);
 router.get('/funcionario/:id', pontoController.porFuncionario);
 router.get('/pendentes-por-dia', pontoController.pontosPendentesPorData);
 router.get('/pendencias-saida', pontoController.pendenciasSaida);
+router.get('/pendentes-por-dia', pontoController.pontosPendentesPorData);
 
 module.exports = router;

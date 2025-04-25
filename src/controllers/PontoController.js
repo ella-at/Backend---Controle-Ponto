@@ -232,6 +232,48 @@ module.exports = {
     }
   },  
 
+  async pontosPendentesPorData(req, res) {
+    try {
+      const pontos = await Ponto.findAll({
+        where: { tipo: 'entrada' },
+        include: [{ model: Funcionario, as: 'Funcionario' }],
+        order: [['data_hora', 'ASC']]
+      });
+  
+      const agrupados = {};
+  
+      for (const entrada of pontos) {
+        const data = entrada.data_hora.toISOString().split('T')[0];
+  
+        const saida = await Ponto.findOne({
+          where: {
+            funcionario_id: entrada.funcionario_id,
+            tipo: 'saida',
+            data_hora: {
+              [Op.gte]: new Date(data + 'T00:00:00'),
+              [Op.lt]: new Date(data + 'T23:59:59')
+            }
+          }
+        });
+  
+        if (!saida) {
+          if (!agrupados[data]) agrupados[data] = [];
+          agrupados[data].push({
+            nome: entrada.Funcionario.nome,
+            cargo: entrada.Funcionario.cargo,
+            departamento: entrada.Funcionario.departamento,
+            entrada: entrada.data_hora
+          });
+        }
+      }
+  
+      res.json(agrupados);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao buscar saídas pendentes por dia' });
+    }
+  },  
+
   async pendenciasSaida(req, res) {
     try {
       const hoje = new Date();

@@ -39,6 +39,58 @@ module.exports = {
     }
   },
 
+  async pendentesPorDia(req, res) {
+    try {
+      const pontos = await Ponto.findAll({
+        where: {
+          tipo: 'entrada'
+        },
+        include: [{ model: Funcionario, as: 'Funcionario' }],
+        order: [['data_hora', 'ASC']]
+      });
+  
+      const agrupados = {};
+  
+      for (const ponto of pontos) {
+        const data = ponto.data_hora.toISOString().split('T')[0];
+  
+        if (!agrupados[data]) agrupados[data] = [];
+  
+        const saida = await Ponto.findOne({
+          where: {
+            funcionario_id: ponto.funcionario_id,
+            tipo: 'saida',
+            data_hora: {
+              [Op.gte]: new Date(data + 'T00:00:00'),
+              [Op.lt]: new Date(data + 'T23:59:59')
+            }
+          }
+        });
+  
+        const pagamento = await Pagamento.findOne({
+          where: {
+            ponto_id: ponto.id
+          }
+        });
+  
+        if (saida && !pagamento) {
+          agrupados[data].push({
+            nome: ponto.Funcionario.nome,
+            cargo: ponto.Funcionario.cargo,
+            departamento: ponto.Funcionario.departamento,
+            entrada: ponto.data_hora
+          });
+        }
+      }
+  
+      res.json(agrupados);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao agrupar pagamentos pendentes por dia' });
+    }
+  },
+  
+
   // Exportar pendentes de pagamento para Excel, filtrado por data
   async exportarPendentesExcel(req, res) {
     try {
