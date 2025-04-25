@@ -104,18 +104,25 @@ module.exports = {
   
       // ⚙️ Alternância automática de tipo
       let tipo = 'entrada';
-      const ultimoPonto = await Ponto.findOne({
-        where: { funcionario_id },
+
+      const agora = new Date();
+      const inicioHoje = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      inicioHoje.setHours(0, 0, 0, 0);
+
+      const ultimoPontoHoje = await Ponto.findOne({
+        where: {
+          funcionario_id,
+          data_hora: { [Op.gte]: inicioHoje }
+        },
         order: [['data_hora', 'DESC']]
       });
 
-      if (ultimoPonto && ultimoPonto.tipo === 'entrada') {
+      if (ultimoPontoHoje && ultimoPontoHoje.tipo === 'entrada') {
         tipo = 'saida';
       }
 
 
 
-  
       const ponto = await Ponto.create({
         funcionario_id,
         tipo,
