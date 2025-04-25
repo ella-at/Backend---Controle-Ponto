@@ -104,18 +104,6 @@ module.exports = {
   
       // ⚙️ Alternância automática de tipo
       let tipo = 'entrada';
-
-      const hoje = new Date();
-      hoje.setHours(0, 0, 0, 0);
-
-      const entradaHoje = await Ponto.findOne({
-        where: {
-          funcionario_id,
-          tipo: 'entrada',
-          data_hora: { [Op.gte]: hoje }
-        }
-      });
-
       const ultimoPonto = await Ponto.findOne({
         where: { funcionario_id },
         order: [['data_hora', 'DESC']]
@@ -125,10 +113,6 @@ module.exports = {
         tipo = 'saida';
       }
 
-      // Bloquear SAÍDA se não houver ENTRADA no mesmo dia
-      if (tipo === 'saida' && !entradaHoje) {
-        return res.status(400).json({ error: 'Não é possível registrar SAÍDA sem ENTRADA registrada hoje.' });
-      }
 
 
   
@@ -168,25 +152,6 @@ module.exports = {
         });
       }
       
-      // Verificar ENTRADA no mesmo dia antes de permitir SAÍDA
-      if (tipo === 'saida') {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-      
-        const entradaHoje = await Ponto.findOne({
-          where: {
-            funcionario_id,
-            tipo: 'entrada',
-            data_hora: { [Op.gte]: hoje }
-          }
-        });
-      
-        if (!entradaHoje) {
-          return res.status(400).json({
-            error: 'Não é possível registrar SAÍDA sem ENTRADA registrada hoje.'
-          });
-        }
-      }
       
   
       const ponto = await Ponto.create({
