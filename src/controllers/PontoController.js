@@ -184,10 +184,13 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
+      // Corrigir o fuso horário manualmente
+      const horarioBr = new Date(new Date(data_hora).toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+  
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
-        data_hora,
+        data_hora: horarioBr,
         responsavel_saida_adm
       });
   
