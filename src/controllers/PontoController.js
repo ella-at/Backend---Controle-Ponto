@@ -162,61 +162,40 @@ module.exports = {
   // REGISTRAR SAÍDA ADMINISTRATIVA
   async registrarSaidaAdm(req, res) {
     try {
-      const { funcionario_id, data_hora, responsavel_saida_adm } = req.body;
+      const { funcionario_id, data_saida, horario_saida, responsavel_saida_adm } = req.body;
   
-      if (!funcionario_id || !data_hora || !responsavel_saida_adm) {
+      if (!funcionario_id || !data_saida || !horario_saida || !responsavel_saida_adm) {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      // 🔎 1. Buscar a entrada pendente (sem saída associada)
-      const entradaPendente = await Ponto.findOne({
-        where: {
-          funcionario_id,
-          tipo: 'entrada'
-        },
-        order: [['data_hora', 'ASC']]
-      });
-  
-      if (!entradaPendente) {
-        return res.status(400).json({ error: 'Nenhuma entrada pendente encontrada.' });
-      }
-  
-      // 🕑 2. Pegar a data da entrada
-      const dataEntrada = dayjs(entradaPendente.data_hora).tz('America/Sao_Paulo');
-  
-      // ⏰ 3. Pegar o horário informado pelo usuário
-      const horarioInformado = dayjs.tz(data_hora, 'America/Sao_Paulo');
-  
-      // 🛠️ 4. Combinar a data da entrada com o horário informado
-      const saidaFinal = dataEntrada
-        .hour(horarioInformado.hour())
-        .minute(horarioInformado.minute())
-        .second(horarioInformado.second())
+      // 🗓️ Combinar data e horário informados
+      const dataHoraCompleta = dayjs(`${data_saida}T${horario_saida}`, { format: 'YYYY-MM-DDTHH:mm' })
+        .tz('America/Sao_Paulo')
         .toDate();
   
-      // ❗ 5. Verificar se já existe uma saída no mesmo dia
+      // 🛡️ Impedir saída duplicada no mesmo dia
+      const inicioDia = dayjs(data_saida).tz('America/Sao_Paulo').startOf('day').toDate();
+      const fimDia = dayjs(data_saida).tz('America/Sao_Paulo').endOf('day').toDate();
+  
       const saidaExistente = await Ponto.findOne({
         where: {
           funcionario_id,
           tipo: 'saida',
           data_hora: {
-            [Op.between]: [
-              dataEntrada.startOf('day').toDate(),
-              dataEntrada.endOf('day').toDate()
-            ]
+            [Op.between]: [inicioDia, fimDia]
           }
         }
       });
   
       if (saidaExistente) {
-        return res.status(400).json({ error: 'Já existe uma saída registrada para esta entrada.' });
+        return res.status(400).json({ error: 'Já existe uma saída para este dia.' });
       }
   
-      // ✅ 6. Criar a saída correta
+      // ✅ Criar a saída
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
-        data_hora: saidaFinal,
+        data_hora: dataHoraCompleta,
         responsavel_saida_adm
       });
   
