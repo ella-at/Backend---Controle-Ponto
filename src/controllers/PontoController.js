@@ -6,7 +6,9 @@ const fs = require('fs');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
+const customParseFormat = require('dayjs/plugin/customParseFormat');
 
+dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -168,12 +170,10 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      // 🗓️ Combinar data e horário informados
-      const dataHoraCompleta = dayjs(`${data_saida}T${horario_saida}`, { format: 'YYYY-MM-DDTHH:mm' })
+      const dataHoraCompleta = dayjs(`${data_saida} ${horario_saida}`, 'YYYY-MM-DD HH:mm')
         .tz('America/Sao_Paulo')
         .toDate();
   
-      // 🛡️ Impedir saída duplicada no mesmo dia
       const inicioDia = dayjs(data_saida).tz('America/Sao_Paulo').startOf('day').toDate();
       const fimDia = dayjs(data_saida).tz('America/Sao_Paulo').endOf('day').toDate();
   
@@ -191,7 +191,6 @@ module.exports = {
         return res.status(400).json({ error: 'Já existe uma saída para este dia.' });
       }
   
-      // ✅ Criar a saída
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
