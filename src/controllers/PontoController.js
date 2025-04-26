@@ -170,12 +170,11 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      const dataHoraCompleta = dayjs(`${data_saida} ${horario_saida}`, 'YYYY-MM-DD HH:mm')
-        .tz('America/Sao_Paulo')
-        .toDate();
+      // 🛠️ Apenas combinar data e hora, sem mudar timezone
+      const dataHoraCompleta = dayjs(`${data_saida} ${horario_saida}`, 'YYYY-MM-DD HH:mm').toDate();
   
-      const inicioDia = dayjs(data_saida).tz('America/Sao_Paulo').startOf('day').toDate();
-      const fimDia = dayjs(data_saida).tz('America/Sao_Paulo').endOf('day').toDate();
+      const inicioDia = dayjs(data_saida).startOf('day').toDate();
+      const fimDia = dayjs(data_saida).endOf('day').toDate();
   
       const saidaExistente = await Ponto.findOne({
         where: {
