@@ -163,26 +163,27 @@ module.exports = {
   async registrarSaidaAdm(req, res) {
     try {
       const { funcionario_id, data_hora, responsavel_saida_adm } = req.body;
-
+  
       if (!funcionario_id || !data_hora || !responsavel_saida_adm) {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
-
-      const horarioBr = dayjs.tz(data_hora, 'America/Sao_Paulo').toDate();
-
+  
+      const horarioBr = dayjs(data_hora).toDate();
+  
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
         data_hora: horarioBr,
         responsavel_saida_adm
       });
-
+  
       return res.status(201).json(ponto);
     } catch (err) {
       console.error('Erro ao registrar saída administrativa:', err);
       return res.status(500).json({ error: 'Erro ao registrar saída administrativa' });
     }
-  },  
+  },
+  
  
 
   async pontosPendentesPorData(req, res) {
