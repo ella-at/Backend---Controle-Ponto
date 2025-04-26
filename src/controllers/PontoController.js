@@ -168,44 +168,62 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      // ⚡ 1. Buscar a entrada pendente mais antiga do funcionário
+      // 🔎 1. Buscar a entrada pendente (sem saída associada)
       const entradaPendente = await Ponto.findOne({
         where: {
           funcionario_id,
-          tipo: 'entrada',
+          tipo: 'entrada'
         },
         order: [['data_hora', 'ASC']]
       });
   
       if (!entradaPendente) {
-        return res.status(400).json({ error: 'Nenhuma entrada pendente encontrada para este funcionário.' });
+        return res.status(400).json({ error: 'Nenhuma entrada pendente encontrada.' });
       }
   
-      // ⚡ 2. Pegar a data da entrada
+      // 🕑 2. Pegar a data da entrada
       const dataEntrada = dayjs(entradaPendente.data_hora).tz('America/Sao_Paulo');
   
-      // ⚡ 3. Pegar apenas o horário que o usuário digitou
-      const horarioDigitado = dayjs.tz(data_hora, 'America/Sao_Paulo');
+      // ⏰ 3. Pegar o horário informado pelo usuário
+      const horarioInformado = dayjs.tz(data_hora, 'America/Sao_Paulo');
   
-      // ⚡ 4. Juntar a data da entrada + horário informado
-      const saidaCorrigida = dataEntrada
-        .hour(horarioDigitado.hour())
-        .minute(horarioDigitado.minute())
-        .second(horarioDigitado.second())
+      // 🛠️ 4. Combinar a data da entrada com o horário informado
+      const saidaFinal = dataEntrada
+        .hour(horarioInformado.hour())
+        .minute(horarioInformado.minute())
+        .second(horarioInformado.second())
         .toDate();
   
-      // ⚡ 5. Criar o ponto de saída
+      // ❗ 5. Verificar se já existe uma saída no mesmo dia
+      const saidaExistente = await Ponto.findOne({
+        where: {
+          funcionario_id,
+          tipo: 'saida',
+          data_hora: {
+            [Op.between]: [
+              dataEntrada.startOf('day').toDate(),
+              dataEntrada.endOf('day').toDate()
+            ]
+          }
+        }
+      });
+  
+      if (saidaExistente) {
+        return res.status(400).json({ error: 'Já existe uma saída registrada para esta entrada.' });
+      }
+  
+      // ✅ 6. Criar a saída correta
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
-        data_hora: saidaCorrigida,
+        data_hora: saidaFinal,
         responsavel_saida_adm
       });
   
       return res.status(201).json(ponto);
     } catch (err) {
       console.error('Erro ao registrar saída administrativa:', err);
-      return res.status(500).json({ error: 'Erro ao registrar saída administrativa' });
+      return res.status(500).json({ error: 'Erro interno ao registrar saída administrativa' });
     }
   },
   
