@@ -170,11 +170,21 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      // 🛠️ Apenas combinar data e hora, sem mudar timezone
-      const dataHoraCompleta = dayjs(`${data_saida} ${horario_saida}`, 'YYYY-MM-DD HH:mm').toDate();
+      // Monta a data/hora sem conversão de fuso
+      const [ano, mes, dia] = data_saida.split('-');
+      const [hora, minuto] = horario_saida.split(':');
   
-      const inicioDia = dayjs(data_saida).startOf('day').toDate();
-      const fimDia = dayjs(data_saida).endOf('day').toDate();
+      const dataHoraCompleta = new Date(
+        ano,                 // ano
+        mes - 1,             // mês (0-indexed em JavaScript!)
+        dia,                 // dia
+        hora,                // hora
+        minuto,              // minuto
+        0                    // segundo
+      );
+  
+      const inicioDia = new Date(ano, mes - 1, dia, 0, 0, 0);
+      const fimDia = new Date(ano, mes - 1, dia, 23, 59, 59);
   
       const saidaExistente = await Ponto.findOne({
         where: {
