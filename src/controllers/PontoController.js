@@ -1,5 +1,5 @@
 const { Ponto, Funcionario } = require('../models');
-const { Sequelize, Op } = require('sequelize');
+const { Sequelize, Op } = require('sequelize'); 
 const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs');
@@ -18,7 +18,9 @@ module.exports = {
       const inicioDia = dayjs().tz('America/Sao_Paulo').startOf('day').toDate();
 
       const pontos = await Ponto.findAll({
-        where: { data_hora: { [Op.gte]: inicioDia } },
+        where: {
+          data_hora: { [Op.gte]: inicioDia }
+        },
         include: [{ model: Funcionario, as: 'Funcionario' }]
       });
 
@@ -57,7 +59,10 @@ module.exports = {
 
       const funcionarios = await Funcionario.findAll();
       const registrosHoje = await Ponto.findAll({
-        where: { tipo: 'entrada', data_hora: { [Op.gte]: hoje } }
+        where: {
+          tipo: 'entrada',
+          data_hora: { [Op.gte]: hoje }
+        }
       });
 
       const idsComEntrada = registrosHoje.map(r => r.funcionario_id);
@@ -119,7 +124,7 @@ module.exports = {
       res.status(400).json({ error: 'Erro ao registrar ponto' });
     }
   },
-
+  
   // REGISTRAR ASSINATURA MOBILE
   async registrarAssinaturaMobile(req, res) {
     try {
@@ -153,7 +158,7 @@ module.exports = {
       return res.status(500).json({ error: 'Erro ao registrar assinatura' });
     }
   },
-
+  
   // REGISTRAR SAÍDA ADMINISTRATIVA
   async registrarSaidaAdm(req, res) {
     try {
@@ -177,41 +182,33 @@ module.exports = {
       console.error('Erro ao registrar saída administrativa:', err);
       return res.status(500).json({ error: 'Erro ao registrar saída administrativa' });
     }
-  },
+  },  
+ 
 
-  // PENDENTES DE SAÍDA DO DIA (AGRUPADOS POR DIA)
-  async pendentesPorDia(req, res) {
+  async pontosPendentesPorData(req, res) {
     try {
-      const data = req.query.data;
-      if (!data) return res.status(400).json({ error: 'Data obrigatória' });
-
-      const inicio = dayjs(data).tz('America/Sao_Paulo').startOf('day').toDate();
-      const fim = dayjs(data).tz('America/Sao_Paulo').endOf('day').toDate();
-
       const pontos = await Ponto.findAll({
-        where: {
-          tipo: 'entrada',
-          data_hora: {
-            [Op.between]: [inicio, fim]
-          }
-        },
+        where: { tipo: 'entrada' },
         include: [{ model: Funcionario, as: 'Funcionario' }],
         order: [['data_hora', 'ASC']]
       });
-
+  
       const agrupados = {};
-
+  
       for (const entrada of pontos) {
+        const data = entrada.data_hora.toISOString().split('T')[0];
+  
         const saida = await Ponto.findOne({
           where: {
             funcionario_id: entrada.funcionario_id,
             tipo: 'saida',
             data_hora: {
-              [Op.between]: [inicio, fim]
+              [Op.gte]: new Date(data + 'T00:00:00'),
+              [Op.lt]: new Date(data + 'T23:59:59')
             }
           }
         });
-
+  
         if (!saida) {
           if (!agrupados[data]) agrupados[data] = [];
           agrupados[data].push({
@@ -222,14 +219,66 @@ module.exports = {
           });
         }
       }
-
+  
       res.json(agrupados);
     } catch (err) {
       console.error(err);
-      res.status(500).json({ error: 'Erro ao buscar saídas pendentes' });
+      res.status(500).json({ error: 'Erro ao buscar saídas pendentes por dia' });
+    }
+  },  
+
+  // PENDENTES DE SAÍDA POR DIA
+  async pendenciasSaida(req, res) {
+    try {
+      const hoje = dayjs().tz('America/Sao_Paulo').startOf('day').toDate();
+
+      const entradas = await Ponto.findAll({
+        where: {
+          tipo: 'entrada',
+          data_hora: { [Op.lt]: hoje }
+        },
+        include: [{ model: Funcionario, as: 'Funcionario' }]
+      });
+
+      const pendencias = [];
+
+      for (const entrada of entradas) {
+        const saida = await Ponto.findOne({
+          where: {
+            funcionario_id: entrada.funcionario_id,
+            tipo: 'saida',
+            data_hora: {
+              [Op.between]: [
+                dayjs(entrada.data_hora).startOf('day').toDate(),
+                dayjs(entrada.data_hora).endOf('day').toDate()
+              ]
+            }
+          }
+        });
+
+        if (!saida) {
+          pendencias.push({
+            funcionario_id: entrada.funcionario_id,
+            nome: entrada.Funcionario.nome,
+            data: entrada.data_hora
+          });
+        }
+      }
+
+      const unicas = Object.values(pendencias.reduce((acc, curr) => {
+        if (!acc[curr.funcionario_id] || new Date(curr.data) < new Date(acc[curr.funcionario_id].data)) {
+          acc[curr.funcionario_id] = curr;
+        }
+        return acc;
+      }, {}));
+
+      res.json(unicas);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao buscar pendências' });
     }
   },
-
+  
   // EXPORTAR PARA EXCEL
   async exportarExcel(req, res) {
     try {
