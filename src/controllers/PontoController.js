@@ -170,18 +170,19 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      // Combinar data e hora como string e parsear corretamente
-      const dataHoraString = `${data_saida} ${horario_saida}`; // Ex: "2025-04-28 15:49"
+      // 🔥 Parseando corretamente com formato fixo
+      const dataHora = dayjs(`${data_saida} ${horario_saida}`, 'YYYY-MM-DD HH:mm', true);
   
-      const dataHoraCompleta = dayjs.tz(dataHoraString, 'YYYY-MM-DD HH:mm', 'America/Sao_Paulo');
-  
-      if (!dataHoraCompleta.isValid()) {
-        return res.status(400).json({ error: 'Data/hora inválida' });
+      if (!dataHora.isValid()) {
+        return res.status(400).json({ error: 'Data ou horário inválidos.' });
       }
   
-      // Proteção para evitar saídas duplicadas no mesmo dia
-      const inicioDia = dayjs(data_saida).tz('America/Sao_Paulo').startOf('day').toDate();
-      const fimDia = dayjs(data_saida).tz('America/Sao_Paulo').endOf('day').toDate();
+      // Agora transforma em UTC corretamente sem perder a hora
+      const dataHoraUtc = dataHora.tz('America/Sao_Paulo', true).toDate();
+  
+      // Protege contra duplicação no mesmo dia
+      const inicioDia = dayjs(data_saida).startOf('day').toDate();
+      const fimDia = dayjs(data_saida).endOf('day').toDate();
   
       const saidaExistente = await Ponto.findOne({
         where: {
@@ -200,7 +201,7 @@ module.exports = {
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
-        data_hora: dataHoraCompleta.toDate(), // Agora sim, correto
+        data_hora: dataHoraUtc,
         responsavel_saida_adm
       });
   
