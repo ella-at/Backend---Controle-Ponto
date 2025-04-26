@@ -29,9 +29,9 @@ router.get('/faltantes', pontoController.faltantes);
 router.get('/por-data', pontoController.pontosPorData);
 router.get('/exportar', pontoController.exportarExcel);
 router.get('/por-funcionario/:id', pontoController.porFuncionario);
-router.get('/funcionario/:id', pontoController.porFuncionario);
-router.get('/pendentes-por-dia', pontoController.pontosPendentesPorData);
+
+// 🔥 Novas rotas:
+router.get('/pendentes-por-dia', pontoController.pendentesPorDia);
 router.get('/pendencias-saida', pontoController.pendenciasSaida);
-router.get('/pendentes-por-dia', pontoController.pontosPendentesPorData);
 
 module.exports = router;
