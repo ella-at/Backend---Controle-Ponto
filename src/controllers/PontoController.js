@@ -170,21 +170,18 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      // Monta a data/hora sem conversão de fuso
-      const [ano, mes, dia] = data_saida.split('-');
-      const [hora, minuto] = horario_saida.split(':');
+      // Combinar data e hora como string e parsear corretamente
+      const dataHoraString = `${data_saida} ${horario_saida}`; // Ex: "2025-04-28 15:49"
   
-      const dataHoraCompleta = new Date(
-        ano,                 // ano
-        mes - 1,             // mês (0-indexed em JavaScript!)
-        dia,                 // dia
-        hora,                // hora
-        minuto,              // minuto
-        0                    // segundo
-      );
+      const dataHoraCompleta = dayjs.tz(dataHoraString, 'YYYY-MM-DD HH:mm', 'America/Sao_Paulo');
   
-      const inicioDia = new Date(ano, mes - 1, dia, 0, 0, 0);
-      const fimDia = new Date(ano, mes - 1, dia, 23, 59, 59);
+      if (!dataHoraCompleta.isValid()) {
+        return res.status(400).json({ error: 'Data/hora inválida' });
+      }
+  
+      // Proteção para evitar saídas duplicadas no mesmo dia
+      const inicioDia = dayjs(data_saida).tz('America/Sao_Paulo').startOf('day').toDate();
+      const fimDia = dayjs(data_saida).tz('America/Sao_Paulo').endOf('day').toDate();
   
       const saidaExistente = await Ponto.findOne({
         where: {
@@ -203,7 +200,7 @@ module.exports = {
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
-        data_hora: dataHoraCompleta,
+        data_hora: dataHoraCompleta.toDate(), // Agora sim, correto
         responsavel_saida_adm
       });
   
