@@ -168,12 +168,37 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      const horarioBr = dayjs(data_hora).toDate();
+      // ⚡ 1. Buscar a entrada pendente mais antiga do funcionário
+      const entradaPendente = await Ponto.findOne({
+        where: {
+          funcionario_id,
+          tipo: 'entrada',
+        },
+        order: [['data_hora', 'ASC']]
+      });
   
+      if (!entradaPendente) {
+        return res.status(400).json({ error: 'Nenhuma entrada pendente encontrada para este funcionário.' });
+      }
+  
+      // ⚡ 2. Pegar a data da entrada
+      const dataEntrada = dayjs(entradaPendente.data_hora).tz('America/Sao_Paulo');
+  
+      // ⚡ 3. Pegar apenas o horário que o usuário digitou
+      const horarioDigitado = dayjs.tz(data_hora, 'America/Sao_Paulo');
+  
+      // ⚡ 4. Juntar a data da entrada + horário informado
+      const saidaCorrigida = dataEntrada
+        .hour(horarioDigitado.hour())
+        .minute(horarioDigitado.minute())
+        .second(horarioDigitado.second())
+        .toDate();
+  
+      // ⚡ 5. Criar o ponto de saída
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
-        data_hora: horarioBr,
+        data_hora: saidaCorrigida,
         responsavel_saida_adm
       });
   
