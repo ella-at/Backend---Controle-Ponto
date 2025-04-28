@@ -6,9 +6,7 @@ const fs = require('fs');
 const dayjs = require('dayjs');
 const utc = require('dayjs/plugin/utc');
 const timezone = require('dayjs/plugin/timezone');
-const customParseFormat = require('dayjs/plugin/customParseFormat');
 
-dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -16,19 +14,25 @@ module.exports = {
 
   // PONTOS DO DIA DE HOJE
   async listarHoje(req, res) {
-    try {
-      const inicioDia = dayjs().tz('America/Sao_Paulo').startOf('day').toDate();
+    const agora = new Date();
+    const inicioDiaBrasil = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    inicioDiaBrasil.setHours(0, 0, 0, 0);
 
+
+    try {
       const pontos = await Ponto.findAll({
         where: {
-          data_hora: { [Op.gte]: inicioDia }
+          data_hora: {
+            [Op.gte]: inicioDiaBrasil
+          }
         },
-        include: [{ model: Funcionario, as: 'Funcionario' }]
+        include: [{
+          model: Funcionario,
+          as: 'Funcionario' 
+        }]
       });
-
       res.json(pontos);
     } catch (error) {
-      console.error(error);
       res.status(500).json({ error: 'Erro ao buscar pontos de hoje' });
     }
   },
@@ -44,7 +48,10 @@ module.exports = {
           Sequelize.fn('DATE', Sequelize.col('data_hora')),
           data
         ),
-        include: [{ model: Funcionario, as: 'Funcionario' }]
+        include: [{
+          model: Funcionario,
+          as: 'Funcionario' 
+        }]
       });
 
       res.json(pontos);
@@ -56,14 +63,17 @@ module.exports = {
 
   // FUNCIONÁRIOS FALTANTES HOJE
   async faltantes(req, res) {
-    try {
-      const hoje = dayjs().tz('America/Sao_Paulo').startOf('day').toDate();
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
 
+    try {
       const funcionarios = await Funcionario.findAll();
       const registrosHoje = await Ponto.findAll({
         where: {
           tipo: 'entrada',
-          data_hora: { [Op.gte]: hoje }
+          data_hora: {
+            [Op.gte]: hoje
+          }
         }
       });
 
@@ -72,7 +82,6 @@ module.exports = {
 
       res.json(faltando);
     } catch (error) {
-      console.error(error);
       res.status(500).json({ error: 'Erro ao buscar faltantes' });
     }
   },
@@ -85,7 +94,6 @@ module.exports = {
         where: { funcionario_id },
         order: [['data_hora', 'DESC']]
       });
-
       res.json(pontos);
     } catch (error) {
       console.error(error);
@@ -93,18 +101,25 @@ module.exports = {
     }
   },
 
-  // REGISTRAR PONTO (entrada/saida automática)
+  ////////////////////
   async registrar(req, res) {
     try {
       const { funcionario_id } = req.body;
       const foto = req.files['foto']?.[0]?.path || null;
       const assinatura = req.files['assinatura']?.[0]?.path || null;
-
+  
+      // ⚙️ Alternância automática de tipo
       let tipo = 'entrada';
 
-      const inicioHoje = dayjs().tz('America/Sao_Paulo').startOf('day').toDate();
+      const agora = new Date();
+      const inicioHoje = new Date(agora.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      inicioHoje.setHours(0, 0, 0, 0);
+
       const ultimoPontoHoje = await Ponto.findOne({
-        where: { funcionario_id, data_hora: { [Op.gte]: inicioHoje } },
+        where: {
+          funcionario_id,
+          data_hora: { [Op.gte]: inicioHoje }
+        },
         order: [['data_hora', 'DESC']]
       });
 
@@ -112,14 +127,16 @@ module.exports = {
         tipo = 'saida';
       }
 
+
+
       const ponto = await Ponto.create({
         funcionario_id,
         tipo,
         foto,
         assinatura,
-        data_hora: dayjs().tz('America/Sao_Paulo').toDate()
+        data_hora: new Date(),
       });
-
+  
       res.status(201).json(ponto);
     } catch (error) {
       console.error(error);
@@ -127,92 +144,115 @@ module.exports = {
     }
   },
   
-  // REGISTRAR ASSINATURA MOBILE
   async registrarAssinaturaMobile(req, res) {
     try {
       const { funcionario_id, tipo = 'entrada' } = req.body;
       const assinatura = req.file?.path;
-
+  
       if (!funcionario_id || !assinatura) {
         return res.status(400).json({ error: 'Dados incompletos' });
       }
-
+  
+      // Regras de negócio: impedir duplas entradas ou saídas
       const ultimoPonto = await Ponto.findOne({
         where: { funcionario_id },
         order: [['data_hora', 'DESC']]
       });
-
+  
       if (ultimoPonto && ultimoPonto.tipo === tipo) {
-        return res.status(400).json({ error: `Já existe um registro de ${tipo}.` });
+        return res.status(400).json({
+          error: `Já existe um registro de ${tipo}.`
+        });
       }
-
+      
+      
+  
       const ponto = await Ponto.create({
         funcionario_id,
         tipo,
         assinatura,
         foto: null,
-        data_hora: dayjs().tz('America/Sao_Paulo').toDate()
+        data_hora: new Date()
       });
-
+  
       return res.status(201).json(ponto);
     } catch (err) {
       console.error(err);
-      return res.status(500).json({ error: 'Erro ao registrar assinatura' });
+      return res.status(500).json({ error: 'Erro ao registrar assinatura por dispositivo' });
     }
   },
   
-  // REGISTRAR SAÍDA ADMINISTRATIVA
   async registrarSaidaAdm(req, res) {
     try {
-      const { funcionario_id, data_saida, horario_saida, responsavel_saida_adm } = req.body;
+      const { funcionario_id, data_hora, responsavel_saida_adm } = req.body;
   
-      if (!funcionario_id || !data_saida || !horario_saida || !responsavel_saida_adm) {
+      if (!funcionario_id || !data_hora || !responsavel_saida_adm) {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      // 🔥 Parseando corretamente com formato fixo
-      const dataHora = dayjs(`${data_saida} ${horario_saida}`, 'YYYY-MM-DD HH:mm', true);
-  
-      if (!dataHora.isValid()) {
-        return res.status(400).json({ error: 'Data ou horário inválidos.' });
-      }
-  
-      // Agora transforma em UTC corretamente sem perder a hora
-      const dataHoraUtc = dataHora.tz('America/Sao_Paulo', true).toDate();
-  
-      // Protege contra duplicação no mesmo dia
-      const inicioDia = dayjs(data_saida).startOf('day').toDate();
-      const fimDia = dayjs(data_saida).endOf('day').toDate();
-  
-      const saidaExistente = await Ponto.findOne({
-        where: {
-          funcionario_id,
-          tipo: 'saida',
-          data_hora: {
-            [Op.between]: [inicioDia, fimDia]
-          }
-        }
-      });
-  
-      if (saidaExistente) {
-        return res.status(400).json({ error: 'Já existe uma saída para este dia.' });
-      }
+      // Corrigir o fuso horário manualmente
+      const horarioBr = dayjs.tz(data_hora, 'America/Sao_Paulo').toDate();
+
   
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
-        data_hora: dataHoraUtc,
+        data_hora: horarioBr,
         responsavel_saida_adm
       });
   
       return res.status(201).json(ponto);
     } catch (err) {
       console.error('Erro ao registrar saída administrativa:', err);
-      return res.status(500).json({ error: 'Erro interno ao registrar saída administrativa' });
+      return res.status(500).json({ error: 'Erro ao registrar saída administrativa.' });
     }
-  },
+  },  
+
+  async pontosPendentesPorData(req, res) {
+    try {
+      const data = req.query.data;
+      if (!data) return res.status(400).json({ error: 'Data obrigatória' });
   
- 
+      // Buscar todos os pontos da data selecionada
+      const pontosDoDia = await Ponto.findAll({
+        where: Sequelize.where(
+          Sequelize.fn('DATE', Sequelize.col('data_hora')),
+          data
+        ),
+        include: [{ model: Funcionario, as: 'Funcionario' }],
+        order: [['data_hora', 'ASC']]
+      });
+  
+      const agrupados = {};
+  
+      for (const ponto of pontosDoDia) {
+        const id = ponto.funcionario_id;
+  
+        if (!agrupados[id]) {
+          agrupados[id] = {
+            funcionario: ponto.Funcionario,
+            entrada: null,
+            saida: null
+          };
+        }
+  
+        if (ponto.tipo === 'entrada') {
+          agrupados[id].entrada = ponto;
+        }
+  
+        if (ponto.tipo === 'saida') {
+          agrupados[id].saida = ponto;
+        }
+      }
+  
+      const pendentes = Object.values(agrupados).filter(reg => reg.entrada && !reg.saida);
+  
+      res.json(pendentes);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao buscar registros pendentes do dia' });
+    }
+  },  
 
   async pontosPendentesPorData(req, res) {
     try {
@@ -256,35 +296,44 @@ module.exports = {
     }
   },  
 
-  // PENDENTES DE SAÍDA POR DIA
   async pendenciasSaida(req, res) {
     try {
-      const hoje = dayjs().tz('America/Sao_Paulo').startOf('day').toDate();
-
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0); // Início do dia de hoje
+  
       const entradas = await Ponto.findAll({
         where: {
           tipo: 'entrada',
-          data_hora: { [Op.lt]: hoje }
+          data_hora: {
+            [Op.lt]: hoje
+          }
         },
-        include: [{ model: Funcionario, as: 'Funcionario' }]
+        include: [{
+          model: Funcionario,
+          as: 'Funcionario',
+          attributes: ['id', 'nome']
+        }]
       });
-
+  
       const pendencias = [];
-
+  
       for (const entrada of entradas) {
+        const entradaData = new Date(entrada.data_hora);
+        entradaData.setHours(0, 0, 0, 0);
+        const diaSeguinte = new Date(entradaData);
+        diaSeguinte.setDate(diaSeguinte.getDate() + 1);
+  
         const saida = await Ponto.findOne({
           where: {
             funcionario_id: entrada.funcionario_id,
             tipo: 'saida',
             data_hora: {
-              [Op.between]: [
-                dayjs(entrada.data_hora).startOf('day').toDate(),
-                dayjs(entrada.data_hora).endOf('day').toDate()
-              ]
+              [Op.gte]: entradaData,
+              [Op.lt]: diaSeguinte
             }
           }
         });
-
+  
         if (!saida) {
           pendencias.push({
             funcionario_id: entrada.funcionario_id,
@@ -293,28 +342,37 @@ module.exports = {
           });
         }
       }
-
-      const unicas = Object.values(pendencias.reduce((acc, curr) => {
-        if (!acc[curr.funcionario_id] || new Date(curr.data) < new Date(acc[curr.funcionario_id].data)) {
-          acc[curr.funcionario_id] = curr;
-        }
-        return acc;
-      }, {}));
-
+  
+      // Remover duplicatas, mantendo a pendência mais antiga por funcionário
+      const unicas = Object.values(
+        pendencias.reduce((acc, curr) => {
+          if (
+            !acc[curr.funcionario_id] ||
+            new Date(curr.data) < new Date(acc[curr.funcionario_id].data)
+          ) {
+            acc[curr.funcionario_id] = curr;
+          }
+          return acc;
+        }, {})
+      );
+  
       res.json(unicas);
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Erro ao buscar pendências' });
+      console.error('Erro ao buscar pendências de saída:', err);
+      res.status(500).json({ error: 'Erro ao buscar pendências de saída' });
     }
-  },
+  },  
   
-  // EXPORTAR PARA EXCEL
+  // EXPORTAR PONTOS PARA EXCEL
   async exportarExcel(req, res) {
     try {
-      const hoje = dayjs().tz('America/Sao_Paulo').startOf('day').toDate();
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
 
       const pontos = await Ponto.findAll({
-        where: { data_hora: { [Op.gte]: hoje } },
+        where: {
+          data_hora: { [Op.gte]: hoje }
+        },
         include: [{ model: Funcionario, as: 'Funcionario' }]
       });
 
@@ -335,7 +393,7 @@ module.exports = {
           cargo: ponto.Funcionario?.cargo,
           departamento: ponto.Funcionario?.departamento,
           tipo: ponto.tipo,
-          data_hora: dayjs(ponto.data_hora).tz('America/Sao_Paulo').format('DD/MM/YYYY HH:mm:ss')
+          data_hora: new Date(ponto.data_hora).toLocaleString('pt-BR')
         });
       });
 
@@ -344,7 +402,7 @@ module.exports = {
 
       return res.download(filePath, 'registros-ponto.xlsx', err => {
         if (err) console.error('Erro ao enviar arquivo:', err);
-        fs.unlink(filePath, () => {});
+        fs.unlink(filePath, () => {}); 
       });
     } catch (err) {
       console.error(err);
