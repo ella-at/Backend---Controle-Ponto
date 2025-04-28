@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
     funcionario_id: {
       type: DataTypes.INTEGER,
       allowNull: false
+    },
+    confirmado: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false
     }
   }, {
     tableName: 'pontos',

@@ -362,6 +362,31 @@ module.exports = {
       res.status(500).json({ error: 'Erro ao buscar pendências de saída' });
     }
   },  
+
+  // Confirmar recebimento de vale diário
+async confirmarRecebimentoVale(req, res) {
+  try {
+    const { ponto_id } = req.body;
+
+    if (!ponto_id) {
+      return res.status(400).json({ error: 'ID do ponto é obrigatório.' });
+    }
+
+    const ponto = await Ponto.findByPk(ponto_id);
+
+    if (!ponto) {
+      return res.status(404).json({ error: 'Ponto não encontrado.' });
+    }
+
+    ponto.confirmado = true; // ⚡️ novo campo que vamos adicionar na model
+    await ponto.save();
+
+    return res.status(200).json({ message: 'Vale confirmado com sucesso.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao confirmar vale.' });
+  }
+},
   
   // EXPORTAR PONTOS PARA EXCEL
   async exportarExcel(req, res) {
