@@ -190,21 +190,20 @@ module.exports = {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
       }
   
-      // Corrigir o fuso horário manualmente
-      const horarioBr = dayjs.tz(data_hora, 'America/Sao_Paulo').toDate();
-
+      // ✅ Cria o horário no timezone correto, SEM mudar para UTC depois
+      const horarioBr = dayjs.tz(data_hora, 'America/Sao_Paulo').format(); 
   
       const ponto = await Ponto.create({
         funcionario_id,
         tipo: 'saida',
-        data_hora: horarioBr,
+        data_hora: horarioBr, // Salva como string formatada (ISO + TZ correto)
         responsavel_saida_adm
       });
   
       return res.status(201).json(ponto);
     } catch (err) {
       console.error('Erro ao registrar saída administrativa:', err);
-      return res.status(500).json({ error: 'Erro ao registrar saída administrativa.' });
+      return res.status(500).json({ error: 'Erro ao registrar saída administrativa' });
     }
   },  
 
