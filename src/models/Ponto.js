@@ -16,9 +16,10 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     },
     confirmado: {
-      type: Sequelize.BOOLEAN,
+      type: DataTypes.BOOLEAN,
       defaultValue: false
     }
+    
   }, {
     tableName: 'pontos',
     underscored: false, 
