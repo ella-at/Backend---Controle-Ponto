@@ -6,8 +6,8 @@ const Sequelize = require('sequelize');
 const basename = path.basename(__filename);
 const db = {};
 
-// Se você usa config/db.js como instância personalizada:
-const sequelize = require('../config/db'); // ❗ deve exportar a instância do Sequelize
+
+const sequelize = require('../config/db'); 
 
 // Carregar todos os modelos automaticamente
 fs

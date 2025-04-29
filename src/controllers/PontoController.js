@@ -377,7 +377,7 @@ async confirmarRecebimentoVale(req, res) {
       return res.status(404).json({ error: 'Ponto não encontrado.' });
     }
 
-    ponto.confirmado = true; // ⚡️ novo campo que vamos adicionar na model
+    ponto.confirmado = true; 
     await ponto.save();
 
     return res.status(200).json({ message: 'Vale confirmado com sucesso.' });

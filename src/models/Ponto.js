@@ -14,13 +14,8 @@ module.exports = (sequelize, DataTypes) => {
     funcionario_id: {
       type: DataTypes.INTEGER,
       allowNull: false
-    },
-    confirmado: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false
-    }
-    
-  }, {
+    }}, 
+    {
     tableName: 'pontos',
     underscored: false, 
     timestamps: true    
